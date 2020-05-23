@@ -6,6 +6,7 @@ import {
   View,
   ScrollView,
   Alert,
+  TextInput,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { FormHandles } from '@unform/core';
@@ -15,7 +16,6 @@ import { Form } from '@unform/mobile';
 import * as Yup from 'yup';
 
 import Icon from 'react-native-vector-icons/Feather';
-import { TextInput } from 'react-native-gesture-handler';
 import getValidationErrors from '../../utils/getValidationErrors';
 import logoImg from '../../assets/logo.png';
 
@@ -23,6 +23,7 @@ import Input from '../../components/Input';
 import Button from '../../components/Button';
 
 import { Container, Title, BackToSignIn, BackToSignInText } from './styles';
+import api from '../../services/api';
 
 interface SignUpFormData {
   nome: string;
@@ -36,43 +37,45 @@ const SignUp: React.FC = () => {
   const emailInputRef = useRef<TextInput>(null);
   const passwordInputRef = useRef<TextInput>(null);
 
-  const handleSignUp = useCallback(async (data: SignUpFormData) => {
-    formRef.current?.setErrors({});
+  const handleSignUp = useCallback(
+    async (data: SignUpFormData) => {
+      formRef.current?.setErrors({});
 
-    try {
-      const schema = Yup.object().shape({
-        name: Yup.string().required('Nome obrigatório'),
-        email: Yup.string()
-          .required('E-mail obrigatório')
-          .email('E-mail inválido'),
-        password: Yup.string().min(6, 'Mínimo 6 caracteres'),
-      });
+      try {
+        const schema = Yup.object().shape({
+          name: Yup.string().required('Nome obrigatório'),
+          email: Yup.string()
+            .required('E-mail obrigatório')
+            .email('E-mail inválido'),
+          password: Yup.string().min(6, 'Mínimo 6 caracteres'),
+        });
 
-      await schema.validate(data, {
-        abortEarly: false,
-      });
+        await schema.validate(data, {
+          abortEarly: false,
+        });
 
-      // await api.post('/users', data);
+        await api.post('/users', data);
 
-      // addToast({
-      //   title: 'Cadastro realizado',
-      //   type: 'success',
-      //   description: 'Você já pode fazer seu logon no GoBarber',
-      // });
+        Alert.alert(
+          'Cadastro realizado com sucesso!',
+          'Você já pode fazer seu logon no GoBarber.',
+        );
 
-      // history.push('/');
-    } catch (err) {
-      if (err instanceof Yup.ValidationError) {
-        const errors = getValidationErrors(err);
+        navigation.navigate('SignIn');
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          const errors = getValidationErrors(err);
 
-        formRef.current?.setErrors(errors);
+          formRef.current?.setErrors(errors);
 
-        return;
+          return;
+        }
+
+        Alert.alert('Erro no cadastro', 'Ocorreu um erro ao fazer cadastro');
       }
-
-      Alert.alert('Erro no cadastro', 'Ocorreu um erro ao fazer cadastro');
-    }
-  }, []);
+    },
+    [navigation],
+  );
 
   return (
     <>
